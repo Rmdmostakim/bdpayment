@@ -1,0 +1,32 @@
+{
+    "name": "rmdmostakim/bdpayment",
+    "description": "A Laravel payment integration package supporting bKash, Nagad, Rocket, and other Bangladeshi gateways with unified APIs.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^9.0|^10.0",
+        "laravel/framework": "^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "RmdMostakim\\BdPayment\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RmdMostakim\\BdPayment\\PaymentServiceProvider"
+            ],
+            "aliases": {
+                "BdPayment": "RmdMostakim\\BdPayment\\Facades\\BdPayment"
+            }
+        }
+    },
+    "authors": [
+        {
+            "name": "Mostakim",
+            "email": "mostakim@workspaceit.com"
+        }
+    ]
+}
