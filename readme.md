@@ -47,6 +47,7 @@ BKASH_PASSWORD=
 BKASH_BASE_URL=
 BKASH_CALLBACK_URL=
 BKASH_MERCHANT_NUMBER=
+# Set bKash gateway mode: use 'sandbox' for testing, 'production' for live transactions
 BKASH_GATEWAY_MODE=sandbox
 ```
 
