@@ -177,6 +177,8 @@ $response = BdPayment::bkash()->createPayment([
 
     <!-- bKash sandbox script -->
     <script src="https://scripts.sandbox.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout-sandbox.js"></script>
+    <!--bKash production script-->
+    <!--<script src="https://scripts.pay.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout.js"></script> -->
 </head>
 <body>
     <div class="max-w-sm bg-white rounded-lg shadow-md p-6 text-center">
