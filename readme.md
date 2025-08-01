@@ -161,7 +161,25 @@ $response = BdPayment::bkash()->createPayment([
 > Ensure Bearer token is sent in the `Authorization` header.
 
 ```php
-<div class="max-w-sm bg-white rounded-lg shadow-md p-6 text-center">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product Card</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- bKash sandbox script -->
+    <script src="https://scripts.sandbox.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout-sandbox.js"></script>
+</head>
+<body>
+    <div class="max-w-sm bg-white rounded-lg shadow-md p-6 text-center">
         <img class="rounded-md w-full h-48 object-cover mb-4" src="https://placehold.co/400x300" alt="Product Image" />
         <h2 class="text-2xl font-semibold mb-2">Awesome Product</h2>
         <p class="text-gray-600 mb-4">This is a description of the awesome product that you will love!</p>
@@ -332,6 +350,8 @@ $response = BdPayment::bkash()->createPayment([
             });
         });
     </script>
+</body>
+</html>
 ```
 
 ---
