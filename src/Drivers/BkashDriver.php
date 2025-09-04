@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * BkashDriver
+ *
+ * Handles Bkash payment gateway integration: token management, payment creation, execution, verification, and logging.
+ *
+ * @package RmdMostakim\BdPayment\Drivers
+ */
+
 namespace RmdMostakim\BdPayment\Drivers;
 
 use Illuminate\Support\Facades\Http;
@@ -9,15 +17,32 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use RmdMostakim\BdPayment\Traits\InteractsWithPayments;
 
+/**
+ * Class BkashDriver
+ *
+ * @method string|null token()
+ * @method array|null createPayment(array $data)
+ * @method array|null executePayment(string $paymentId)
+ * @method array|null verifyPayment(string $paymentId)
+ * @method bool cancelPayment(string $paymentId)
+ */
 class BkashDriver implements BkashPaymentDriverInterface
 {
     use InteractsWithPayments;
 
+    /** @var string Bkash gateway mode (sandbox/production) */
     protected string $mode;
+    /** @var string Merchant number for Bkash */
     protected string $merchant_number;
+    /** @var string Bkash API base URL */
     protected string $baseUrl;
+    /** @var array Bkash API headers */
     protected array $headers;
 
+    /**
+     * BkashDriver constructor.
+     * Initializes config values and headers.
+     */
     public function __construct()
     {
         $this->mode = config('bdpayment.drivers.bkash.mode', 'sandbox');
@@ -31,6 +56,10 @@ class BkashDriver implements BkashPaymentDriverInterface
         ];
     }
 
+    /**
+     * Get or generate a Bkash API token.
+     * @return string|null
+     */
     public function token(): ?string
     {
         return Cache::remember('bkash_token', now()->addHour(), function () {
@@ -41,10 +70,23 @@ class BkashDriver implements BkashPaymentDriverInterface
                 'app_secret' => config('bdpayment.drivers.bkash.app_secret'),
             ];
 
+            Log::info('Bkash token request', [
+                'endpoint' => $endpoint,
+                'headers' => $this->headers,
+                'payload' => $body,
+            ]);
+
             try {
                 $response = Http::withHeaders($this->headers)
+                    ->retry(3, 100)
                     ->post($endpoint, $body)
                     ->throw();
+
+                Log::info('Bkash token response', [
+                    'status' => $response->status(),
+                    'headers' => $response->headers(),
+                    'body' => $response->json(),
+                ]);
 
                 return $response->json('id_token');
             } catch (RequestException $e) {
@@ -57,17 +99,35 @@ class BkashDriver implements BkashPaymentDriverInterface
         });
     }
 
+    /**
+     * Create a new Bkash payment.
+     * @param array $data
+     * @return array|null
+     */
     public function createPayment(array $data): array|null
     {
         try {
-            $filtered = $this->filterPayload($data);
+            $filtered = $this->filterBkashPayload($data);
             $invoice  = $this->storePayment($filtered, 'bkash');
             $payload  = $this->makeBkashPayload($filtered, $invoice);
 
+            Log::info('Bkash create payment request', [
+                'endpoint' => $this->buildEndpoint('create'),
+                'headers' => $this->headers,
+                'payload' => $payload,
+            ]);
+
             $response = Http::withToken($this->token())
                 ->withHeaders($this->headers)
+                ->retry(3, 100)
                 ->post($this->buildEndpoint('create'), $payload)
                 ->throw();
+
+            Log::info('Bkash create payment response', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json(),
+            ]);
 
             $response = $response->json();
             if (isset($response['paymentID'])) {
@@ -84,6 +144,11 @@ class BkashDriver implements BkashPaymentDriverInterface
         }
     }
 
+    /**
+     * Execute a Bkash payment by payment ID.
+     * @param string $paymentId
+     * @return array|null
+     */
     public function executePayment(string $paymentId): array|null
     {
         try {
@@ -91,14 +156,25 @@ class BkashDriver implements BkashPaymentDriverInterface
                 ? $this->buildEndpoint('execute') . '/' . $paymentId
                 : $this->buildEndpoint('execute');
 
-            $payload = $this->mode === 'production'
-                ? []
-                : ['paymentID' => $paymentId];
+            $payload = ['paymentID' => $paymentId];
+
+            Log::info('Bkash execute payment request', [
+                'endpoint' => $endpoint,
+                'headers' => $this->headers,
+                'payload' => $payload,
+            ]);
 
             $response = Http::withToken($this->token())
                 ->withHeaders($this->headers)
+                ->retry(3, 100)
                 ->post($endpoint, $payload)
                 ->throw();
+
+            Log::info('Bkash execute payment response', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json(),
+            ]);
 
             return $response->json();
         } catch (RequestException $e) {
@@ -110,6 +186,11 @@ class BkashDriver implements BkashPaymentDriverInterface
         }
     }
 
+    /**
+     * Verify a Bkash payment by payment ID.
+     * @param string $paymentId
+     * @return array|null
+     */
     public function verifyPayment(string $paymentId): array|null
     {
         try {
@@ -117,14 +198,26 @@ class BkashDriver implements BkashPaymentDriverInterface
                 ? $this->buildEndpoint('query') . '/' . $paymentId
                 : $this->buildEndpoint('query');
 
-            $payload = $this->mode === 'production'
-                ? []
-                : ['paymentID' => $paymentId];
+            $payload = ['paymentID' => $paymentId];
+
+            Log::info('Bkash verify payment request', [
+                'endpoint' => $endpoint,
+                'headers' => $this->headers,
+                'payload' => $payload,
+            ]);
 
             $response = Http::withToken($this->token())
                 ->withHeaders($this->headers)
+                ->retry(3, 100)
                 ->post($endpoint, $payload)
                 ->throw();
+
+            Log::info('Bkash verify payment response', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json(),
+            ]);
+
             return $response->json();
         } catch (RequestException $e) {
             Log::error("Bkash payment verification failed for ID: {$paymentId}", [
@@ -135,14 +228,20 @@ class BkashDriver implements BkashPaymentDriverInterface
         }
     }
 
-
+    /**
+     * Cancel a Bkash payment by payment ID.
+     * @param string $paymentId
+     * @return bool
+     */
     public function cancelPayment(string $paymentId): bool
     {
         return true;
     }
 
     /**
-     * Build the full endpoint URL based on mode.
+     * Build the full endpoint URL based on mode and method.
+     * @param string $method
+     * @return string
      */
     protected function buildEndpoint(string $method): string
     {
