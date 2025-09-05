@@ -1,122 +1,293 @@
-# 💳 BDPayment - Laravel Integration for bKash & Nagad
+# 💳 **BDPayment Laravel Package**
 
-A simple and extensible Laravel package for integrating **bKash** and **Nagad** (and other Bangladeshi) payment gateways.  
-Developed and maintained by [Mostakim Rahman](https://github.com/Rmdmostakim).
-
----
-
-## 🛠 Features
-
-- ✅ bKash Token, Checkout, Execute & Verify APIs  
-- 🚧 Nagad Integration (Coming Soon)  
-- 📝 SSLCommerz, Rocket, City Bank, DBBL (Planned)  
-- 🔒 Supports Laravel Sanctum & Passport  
-- ⚙️ Works with Web, API & ReactJS Frontends  
+A modern Laravel package for integrating Bangladesh payment gateways — **Bkash**, **Nagad**, and **SSLCommerz** — with unified API endpoints, robust logging, and seamless frontend callback support.
+Developed and maintained by [Rmdmostakim](https://github.com/Rmdmostakim).
 
 ---
 
-## 📦 Installation
+## ✨ Features
 
-### 1. Install
+- 🔗 **Bkash, Nagad, and SSLCommerz** payment gateway integration
+- 🛠️ Unified API for payment creation, execution, verification, and callback
+- ⚙️ Configurable via `.env` and `config/bdpayment.php`
+- 🔄 Frontend callback URL support
+- 📝 Extensive logging and error handling
+
+---
+
+## 🚀 Installation
 
 ```bash
 composer require rmdmostakim/bdpayment
 ```
 
-### 2. Publish Configuration
+---
+
+## ⚙️ Configuration
+
+**Publish the config file:**
 
 ```bash
-php artisan vendor:publish --provider="RmdMostakim\BdPayment\PaymentServiceProvider"
+php artisan vendor:publish --provider="RmdMostakim\BdPayment\BdPaymentServiceProvider"
 ```
-
-### 3. Run Migration
-
+**Run migration:**
 ```bash
 php artisan migrate
 ```
-
-### 4. Environment Configuration
-
-Add the following to your `.env`:
+**Set the following variables in your `.env`:**
 
 ```env
-BKASH_APP_KEY=
-BKASH_APP_SECRET=
-BKASH_USERNAME=
-BKASH_PASSWORD=
-BKASH_BASE_URL=
-BKASH_CALLBACK_URL=
-BKASH_MERCHANT_NUMBER=
-# Set bKash gateway mode: use 'sandbox' for testing, 'production' for live transactions
+APP_URL=http://localhost
+FRONTEND_PAYMENT_SUCCESS_URL=http://localhost:3000/payment
+
 BKASH_GATEWAY_MODE=sandbox
+BKASH_BASE_URL="https://tokenized.sandbox.bka.sh/v1.2.0-beta"
+BKASH_USERNAME="sandboxTokenizedUser02"
+BKASH_PASSWORD="sandboxTokenizedUser02@12345"
+BKASH_APP_KEY="your_app_key"
+BKASH_APP_SECRET="your_app_secret"
+BKASH_CALLBACK_URL="${APP_URL}/api/gateway/bkash/callback"
+
+NAGAD_PAYMENT_MODE=sandbox
+NAGAD_BASE_URL="http://sandbox.mynagad.com:10080"
+NAGAD_MERCHANT_ID="your_merchant_id"
+NAGAD_PUBLIC_KEY="keys/nagad_public_key.pem"
+NAGAD_PRIVATE_KEY="keys/nagad_private_key.pem"
+NAGAD_CALLBACK_URL="${APP_URL}/api/gateway/nagad/callback"
+
+SSLCOMMERZ_MODE=sandbox
+SSLCOMMERZ_BASE_URL="https://sandbox.sslcommerz.com"
+SSLCOMMERZ_STORE_ID="your_store_id"
+SSLCOMMERZ_STORE_PASSWORD="your_store_password"
+SSLCOMMERZ_CALLBACK_URL="${APP_URL}/api/gateway/sslcommerz/callback"
+```
+
+_Edit `config/bdpayment.php` as needed. Default callback URLs use your `APP_URL`._
+
+---
+
+## 🧑‍💻 Usage
+
+### 🔌 API Endpoints
+
+#### 🏦 **Bkash**
+
+- **Create Payment:**  
+  `POST /api/gateway/bkash/create`
+- **Execute Payment:**  
+  `POST /api/gateway/bkash/execute`
+- **Callback:**  
+  `GET /api/gateway/bkash/callback?paymentID=...`
+
+- **Payload Example**
+
+```json
+{
+  "amount": 100,
+  "invoice": "INV123", // optional
+  "user_id": 1,        // optional
+  "product_id": 5      // optional
+}
 ```
 
 ---
 
-## ✅ Usage
+#### 📱 **Nagad**
 
-### 📌 For bKash
+- **Create Payment:**  
+  `POST /api/gateway/nagad/create`
+- **Callback:**  
+  `GET /api/gateway/nagad/callback?payment_ref_id=...&order_id=...`
 
-#### Option 1: Dependency Injection
+- **Payload Example**
 
-```php
-use RmdMostakim\BdPayment\PaymentManager;
-
-public function getToken(PaymentManager $gateway)
+```json
 {
-    return $gateway->bkash()->token();
+  "amount": 100,
+  "invoice": "INV123", // optional
+  "user_id": 1,        // optional
+  "product_id": 5      // optional
+}
+```
+---
+
+#### 🏦 **SSLCommerz**
+
+- **Create Payment:**  
+  `POST /api/gateway/sslcommerz/create`
+- **Callback:**  
+  `GET /api/gateway/sslcommerz/callback?val_id=...&tran_id=...`
+
+- **Payload Example**
+
+```json
+{
+  "amount": 100,
+  "invoice": "INV123", // optional
+  "user_id": 1,        // optional
+  "product_id": 5,     // optional
+  "customer_name": "John Doe", // custom fields supported
+  "order_note": "Special instructions" // custom fields supported
+}
+```
+Or send as `cart_json`:
+```json
+{
+  "cart_json": "{\"amount\":100,\"invoice\":\"INV123\",\"user_id\":1,\"product_id\":5}"
 }
 ```
 
-#### Option 2: Facade
+---
 
-```php
-use RmdMostakim\BdPayment\Facades\BdPayment;
+#### 📄 **Get All Invoices**
 
-public function getToken()
+- **Get All Payments:**  
+  `GET /api/gateway/payments`
+- **Query Parameters (optional):**  
+  `status`, `mode`, `user_id`, `min_amount`, `max_amount`, `from`, `to`, `sortBy`, `sortDir`, `perPage`
+
+- **Example Request & Response**
+
+_Request:_
+```
+GET /api/gateway/payments?user_id=1&status=completed&perPage=20
+```
+_Response:_
+```json
 {
-    return BdPayment::bkash()->token();
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "invoice": "INV123",
+      "amount": 100,
+      "status": "completed"
+      // ...other fields
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 2
+  }
 }
 ```
 
-#### Available Methods
+---
 
-```php
-BdPayment::bkash()->token();                      // Get access token
-BdPayment::bkash()->createPayment([...]);         // Create a checkout session
-BdPayment::bkash()->executePayment($tranId);      // Confirm the transaction
-BdPayment::bkash()->verifyPayment($tranId);       // Verify payment status
+#### 🔎 **Find By Invoice**
 
+- **Find Payment by Invoice:**  
+  `GET /api/gateway/payments/{invoice}`
+
+- **Example Response**
+
+_Success:_
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "invoice": "INV123",
+    "amount": 100,
+    "status": "completed"
+    // ...other fields
+  }
+}
 ```
-### 📥 `createPayment()` Parameters
+_Not found:_
+```json
+{
+  "success": false,
+  "message": "Payment not found",
+  "data": null
+}
+```
 
-This method accepts an array with the following keys:
+---
 
-| Key       | Type   | Required | Description                                      |
-|-----------|--------|----------|--------------------------------------------------|
-| `user_id` | int    | ✅ Yes   | Authenticated user's ID                          |
-| `amount`  | float  | ✅ Yes   | The payment amount (BDT)                         |
-| `invoice` | string | ✳️ Optional | Custom invoice number. Auto-generated if omitted |
+## 📝 Logging
 
-#### Example:
+All requests, responses, and errors are logged using Laravel's logging system for easy debugging and traceability.
+
+---
+
+## 🔄 Frontend Callback
+
+After payment, users are redirected to the configured frontend callback URL with query parameters:
+
+- `invoice` (invoice)
+- `status` (`success` or `failed`)
+- `message` (status message)
+
+---
+
+## 🏷️ Using Facades
+
+You can use the `PaymentManager` facade for direct access to gateway methods in your code:
 
 ```php
-$response = BdPayment::bkash()->createPayment([
-    'user_id' => auth()->id(),
-    'amount' => 150,
-    // 'invoice' => 'INV-20250731-01' // Optional
+use RmdMostakim\BdPayment\Facades\PaymentManager;
+
+// Create a Bkash payment
+$response = PaymentManager::bkash()->createPayment([
+    'amount' => 100,
+    'invoice' => 'INV123',
+    'user_id' => 1,
+    'product_id' => 5
 ]);
 
-```
-- 🧠 Tip: If you don’t pass invoice, it will automatically generate a unique one.
+// Execute a Bkash payment
+$executeResponse = PaymentManager::bkash()->executePayment('bkash_payment_id');
 
-- 📌 For sandbox redirect to sandbox bKash's payment page. For production checkout through your own domain, see the section below for an example.
+// Verify a Bkash payment
+$verifyResponse = PaymentManager::bkash()->verifyPayment('bkash_payment_id');
+
+// Create a Nagad payment
+$init = PaymentManager::nagad()->initializePayment('INV123');
+$payload = [
+    'user_id' => 1,
+    'invoice' => 'INV123',
+    'amount' => 100,
+    'product_id' => 5,
+    'transaction_id' => $init['paymentReferenceId'],
+    'challenge' => $init['challenge']
+];
+$nagadResponse = PaymentManager::nagad()->executePayment($payload);
+
+// Verify a Nagad payment
+$verifyNagad = PaymentManager::nagad()->verifyPayment($init['paymentReferenceId']);
+
+// Create an SSLCommerz payment
+$sslcommerzResponse = PaymentManager::sslcommerz()->createPayment([
+    'amount' => 100,
+    'invoice' => 'INV123',
+    'user_id' => 1,
+    'product_id' => 5,
+    'customer_name' => 'John Doe', // custom field
+    'order_note' => 'Special instructions' // custom field
+]);
+
+// Verify an SSLCommerz payment
+$verifySslcommerz = PaymentManager::sslcommerz()->verifyPayment('tran_id');
+
+// Get all payments (invoices)
+$allPayments = PaymentManager::all([
+    'user_id' => 1,
+    'status' => 'completed',
+    'perPage' => 20
+]);
+
+// Find a payment by invoice
+$payment = PaymentManager::findByInvoice('INV123');
+```
 
 ---
 
-## 🧩 Example: Use in Laravel Web Project
+## 🧩 **Bkash: Laravel Web Example**
 
-```php
+```blade
 <div class="max-w-sm bg-white rounded-lg shadow-md p-6">
     <img
         class="rounded-md w-full h-48 object-cover mb-4"
@@ -143,20 +314,18 @@ $response = BdPayment::bkash()->createPayment([
     </form>
 </div>
 ```
-#### Card
 ![Product Card](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-1.png)
 ---
-#### Payment Page
 ![Payment Page](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-2.png)
 ---
-#### Transaction Success
 ![Payment Success](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-3.png)
 ---
-#### Transaction Failed
 ![Payment Failed](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-4.png)
 ---
 
-## 🧪 Example: Use in API with Sanctum/Passport
+---
+
+## 🧪 **Bkash: API with Sanctum/Passport**
 
 > Ensure Bearer token is sent in the `Authorization` header.
 
@@ -358,7 +527,7 @@ $response = BdPayment::bkash()->createPayment([
 
 ---
 
-## ⚛️ Example: ReactJS Frontend Integration
+## ⚛️ **Bkash: ReactJS Frontend Integration**
 
 1. Use the `/api/gateway/bkash/create` endpoint to get `bkashURL`.
 2. Redirect to that URL using `window.location.href`.
@@ -488,142 +657,100 @@ export default BkashCheckout;
 
 ```
 ---
+## 🧩 **SSLCommerz: Laravel Web Example**
 
-### 🧩 Build Custom Payment Logic
+```blade
+<!-- resources/views/cart.blade.php -->
+<button type="button"
+        id="sslczPayBtn"
+        order="68baecc3951fd"
+        postdata=""
+        endpoint="{{ url('/api/gateway/sslcommerz/create') }}"
+        actionurl="{{ url('/api/gateway/sslcommerz/create') }}"
+        class="btn btn-primary">
+    Pay With SSLCOMMERZ
+</button>
 
-You can build your own custom flow using the methods exposed by `BdPayment::bkash()`. Below are examples of how to use them in your controller or service layer.
+<input type="text" class="form-control cus_phone" placeholder="Mobile Number">
 
----
-
-### 🛒 1. Create a Payment
-
-```php
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use RmdMostakim\BdPayment\Facades\BdPayment;
-
-public function manualCheckout(Request $request)
-{
-    $user = Auth::user();
-    $invoice = 'INV-' . strtoupper(uniqid());
-    $amount = $request->input('amount', 100);
-
-    $response = BdPayment::bkash()->createPayment([
-        'user_id' => $user->id,
-        'amount'  => $amount,
-        'invoice' => $invoice,
-    ]);
-
-    if (isset($response['bkashURL'])) {
-        return redirect()->away($response['bkashURL']);
+<script src="https://sandbox.sslcommerz.com/embed.min.js"></script>
+<script>
+    function updatePaymentData() {
+        let obj = {
+            cus_phone: document.querySelector('.cus_phone').value,
+            amount: document.querySelector('.total_amount')?.value || 200
+        };
+        document.getElementById('sslczPayBtn').setAttribute('postdata', JSON.stringify(obj));
     }
+    document.querySelector('.cus_phone').addEventListener('change', updatePaymentData);
+    updatePaymentData();
+</script>
+```
+![Payment Page](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-5.png)
+---
+![Gateway Popup](https://raw.githubusercontent.com/Rmdmostakim/screens/main/bdpayment-6.png)
+---
 
-    return response()->json([
-        'message' => 'Payment initialized',
-        'data'    => $response,
-    ]);
+## ⚛️ **SSLCommerz: ReactJS Example**
+
+```jsx
+import { useEffect, useState } from "react";
+
+export default function SslCommerzCheckout() {
+  const [phone, setPhone] = useState("");
+  const [amount, setAmount] = useState(200); // example static total
+
+  useEffect(() => {
+    // Load SSLCOMMERZ embed script
+    const script = document.createElement("script");
+    script.src = "https://sandbox.sslcommerz.com/embed.min.js?" + Math.random().toString(36).substring(7);
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const handleClick = () => {
+    const obj = { cus_phone: phone, amount };
+    const btn = document.getElementById("sslczPayBtn");
+    btn.setAttribute("postdata", JSON.stringify(obj));
+  };
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Mobile Number"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        className="border p-2 mb-2"
+      />
+
+      <button
+        id="sslczPayBtn"
+        order="68baecc3951fd"
+        endpoint="/api/gateway/sslcommerz/create"
+        actionurl="/api/gateway/sslcommerz/create"
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+        onClick={handleClick}
+      >
+        Pay With SSLCOMMERZ
+      </button>
+    </div>
+  );
 }
+
 ```
 
 ---
 
-### ✅ 2. Execute a Payment
+## 🧩 **Extending**
 
-This should be called after the user authorizes the payment on bKash's popup.
-
-```php
-public function executePayment(Request $request)
-{
-    $transactionId = $request->input('transaction_id');
-
-    $response = BdPayment::bkash()->executePayment($transactionId);
-
-    if ($response['transactionStatus'] === 'Completed') {
-        // Payment successful, update your records
-        return response()->json(['message' => 'Payment successful', 'data' => $response]);
-    }
-
-    return response()->json(['message' => 'Payment not completed', 'data' => $response], 400);
-}
-```
+You can add more gateways by extending the drivers in  
+`packages/rmdmostakim/bdpayment/src/Drivers` and updating the config.
 
 ---
 
-### 🔍 3. Verify a Payment
+## 🪪 License
 
-You can use this to confirm the final status of a payment at any point.
-
-```php
-public function verifyPayment(Request $request)
-{
-    $transactionId = $request->input('transaction_id');
-
-    $verification = BdPayment::bkash()->verifyPayment($transactionId);
-
-    if (isset($verification['transactionStatus']) && $verification['transactionStatus'] === 'Completed') {
-        return response()->json(['message' => 'Payment verified successfully', 'data' => $verification]);
-    }
-
-    return response()->json(['message' => 'Payment not verified or failed', 'data' => $verification], 400);
-}
-```
+MIT
 
 ---
-
-### 📥 `createPayment()` Parameters
-
-This method accepts an array with the following keys:
-
-| Key       | Type   | Required | Description                                      |
-|-----------|--------|----------|--------------------------------------------------|
-| `user_id` | int    | ✅ Yes   | Authenticated user’s ID                         |
-| `amount`  | float  | ✅ Yes   | Amount to be paid (in BDT)                      |
-| `invoice` | string | ✳️ Optional | Custom invoice number (auto-generated if empty) |
-
----
-
-### 🧠 Tips
-
-- 🧠 If you don’t pass `invoice`, it will automatically generate a unique one.
-- 📌 If you want to redirect to bKash's payment page, use `bkashURL`.
-  If you are handling checkout through your own domain, see the section below for an example.
-
----
-
-## 🧱 Configuration
-
-`config/bdpayment.php`:
-
-```php
-return [
-    'default' => 'bkash',
-    'drivers' => [
-        'bkash' => [...],
-        'nagad' => [...], // Coming soon
-    ]
-];
-```
-
----
-
-## 🧰 Roadmap
-
-- [x] bKash Checkout
-- [ ] Nagad Integration
-- [ ] SSLCommerz
-- [ ] Rocket, DBBL, City Bank
-- [ ] Webhooks
-- [ ] Multi-tenancy support
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome!  
-Please open an issue first to discuss major changes.
-
----
-
-## 📄 License
-
-MIT © [Mostakim Rahman](https://github.com/Rmdmostakim)
