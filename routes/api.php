@@ -12,6 +12,7 @@
 use Illuminate\Support\Facades\Route;
 use RmdMostakim\BdPayment\Http\Controllers\Api\Bkash\PaymentController as BkashPaymentController;
 use RmdMostakim\BdPayment\Http\Controllers\Api\Nagad\PaymentController as NagadPaymentController;
+use RmdMostakim\BdPayment\Http\Controllers\Api\Sslcommerz\PaymentController as SslcommerzPaymentController;
 
 // Group all payment gateway routes under /api/gateway
 Route::middleware(['api'])->prefix('api/gateway')
@@ -33,5 +34,13 @@ Route::middleware(['api'])->prefix('api/gateway')
             ->group(function () {
                 Route::post('create', 'create');   // Create a Nagad payment
                 Route::get('callback', 'callback'); // Nagad payment callback (redirects to frontend)
+            });
+        // SSLCommerz payment routes
+        Route::prefix('sslcommerz')
+            ->name('sslcommerz.')
+            ->controller(SslcommerzPaymentController::class)
+            ->group(function () {
+                Route::post('create', 'create');   // Create a SSLCommerz payment
+                Route::post('callback', 'callback'); // SSLCommerz payment callback (redirects to frontend)
             });
     });

@@ -36,7 +36,17 @@ return [
         ],
         // SSLCommerz gateway settings (future implementation)
         'sslcommerz' => [
-            // Future implementation
+            'base_url' => env('SSLCOMMERZ_BASE_URL'),
+            'store_id' => env('SSLCOMMERZ_STORE_ID'),
+            'store_password' => env('SSLCOMMERZ_STORE_PASSWORD'),
+            'callback_url' => env('SSLCOMMERZ_CALLBACK_URL', env('APP_URL') . '/api/gateway/sslcommerz/callback'),
+            'mode' => env('SSLCOMMERZ_MODE', 'sandbox'),
+            'default_phone'=> env('SSLCOMMERZ_DEFAULT_PHONE', '01711111111'),
+            'default_email'=> env('SSLCOMMERZ_DEFAULT_EMAIL', 'hello@example.com'),
+            'default_address'=> env('SSLCOMMERZ_DEFAULT_ADDRESS', '123, ABC Road, Dhaka'),
+            'default_city'=> env('SSLCOMMERZ_DEFAULT_CITY', 'Dhaka'),
+            'default_postcode'=> env('SSLCOMMERZ_DEFAULT_POSTCODE', '1000'),
+            'default_country'=> env('SSLCOMMERZ_DEFAULT_COUNTRY', 'Bangladesh'),
         ],
     ]
 ];

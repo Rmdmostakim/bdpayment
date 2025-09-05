@@ -131,4 +131,38 @@ class Bdpayment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Scope for filtering by multiple fields.
+     */
+    public function scopeFilter($query, array $filters)
+    {
+        return $query
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['mode'] ?? null, fn($q, $mode) => $q->where('mode', $mode))
+            ->when($filters['user_id'] ?? null, fn($q, $user) => $q->where('user_id', $user))
+            ->when($filters['min_amount'] ?? null, fn($q, $min) => $q->where('amount', '>=', $min))
+            ->when($filters['max_amount'] ?? null, fn($q, $max) => $q->where('amount', '<=', $max))
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('created_at', '<=', $to));
+    }
+
+    /**
+     * Get all payments with filtering, sorting, and pagination.
+     */
+    public static function getAll(array $filters = [], string $sortBy = 'created_at', string $sortDir = 'desc', int $perPage = 15)
+    {
+        return self::query()
+            ->filter($filters)
+            ->orderBy($sortBy, $sortDir)
+            ->paginate($perPage);
+    }
+
+    /**
+     * Find payment by invoice.
+     */
+    public static function findByInvoice(string $invoice): ?self
+    {
+        return self::where('invoice', $invoice)->first();
+    }
 }
