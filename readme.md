@@ -28,7 +28,7 @@ composer require rmdmostakim/bdpayment
 **Publish the config file:**
 
 ```bash
-php artisan vendor:publish --provider="RmdMostakim\BdPayment\BdPaymentServiceProvider"
+php artisan vendor:publish --provider="RmdMostakim\BdPayment\PaymentServiceProvider"
 ```
 **Run migration:**
 ```bash
